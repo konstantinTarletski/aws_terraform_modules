@@ -3,19 +3,11 @@ output "vpc_id_and_cidr" {
 }
 
 output "public_subnets_ids_and_cidrs" {
-  value = {
-    for s in aws_subnet.public_subnets :
-    s.id => {
-      cidr_block = s.cidr_block
-      az         = s.availability_zone
-    }
-  }
+  value = local.public_subnets_by_az
 }
 
 output "private_subnets_ids_and_cidrs" {
-  value = {
-
-  }
+  value = local.private_subnets_by_az
 }
 
 output "db_subnets_ids_and_cidrs" {
