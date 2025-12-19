@@ -6,9 +6,6 @@ terraform {
     }
   }
 }
-provider "aws" {
-
-}
 
 locals {
   workspace = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
