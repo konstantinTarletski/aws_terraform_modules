@@ -172,7 +172,7 @@ resource "aws_route_table_association" "private_subnet_bind" {
   depends_on     = [aws_route_table.private_subnet_internet_route, aws_subnet.private_subnets]
 }
 
-#-----------------------------PRIVATE NETWORKS-----------------------------#
+#-----------------------------DB NETWORKS-----------------------------#
 
 resource "aws_subnet" "db_subnets" {
   count             = length(var.db_subnets_cidrs)
