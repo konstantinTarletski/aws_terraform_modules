@@ -60,9 +60,12 @@ locals {
   //finding same AZ for private and public subnets
   public_and_private_subnets_same_zones = setintersection(keys(local.public_subnets_by_az), keys(local.private_subnets_by_az))
   //finding final AZ for NATs
-  nat_zones = length(local.public_and_private_subnets_same_zones) > 0 ? local.public_and_private_subnets_same_zones : (
-    length(local.public_subnets_by_az) > 0 ? [keys(local.public_subnets_by_az)[0]] : []
-  )
+  nat_zones = length(aws_subnet.private_subnets) > 0 ? (
+    length(local.public_and_private_subnets_same_zones) > 0 ? local.public_and_private_subnets_same_zones : (
+      length(local.public_subnets_by_az) > 0 ? [keys(local.public_subnets_by_az)[0]] : []
+    )
+  ) : []
+
   //finding subnets for NATs
   nat_gateways_zones_and_subnets = {
     for zone in local.nat_zones :
@@ -120,15 +123,15 @@ resource "aws_route_table_association" "public_subnet_bind" {
 
 resource "aws_eip" "eip_for_nat" {
   for_each = local.nat_gateways_zones_and_subnets
-  domain = "vpc"
+  domain   = "vpc"
   tags = merge(local.default_tags, {
     Name = "Public-subnet-eip-${var.environment}${local.workspace}"
   })
 }
 
 resource "aws_nat_gateway" "nat_gw_for_private_subnet" {
-  for_each = local.nat_gateways_zones_and_subnets
-  subnet_id = local.nat_gateways_zones_and_subnets[each.key].subnet_id
+  for_each      = local.nat_gateways_zones_and_subnets
+  subnet_id     = local.nat_gateways_zones_and_subnets[each.key].subnet_id
   allocation_id = aws_eip.eip_for_nat[each.key].id
   tags = merge(local.default_tags, {
     Name = "NAT-gateway-${var.environment}${local.workspace}"
@@ -150,7 +153,7 @@ resource "aws_subnet" "private_subnets" {
 
 //Route table for each PRIVATE subnets
 resource "aws_route_table" "private_subnet_internet_route" {
-  count = length(aws_nat_gateway.nat_gw_for_private_subnet) > 0 ? length(aws_subnet.private_subnets) : 0
+  count  = length(aws_nat_gateway.nat_gw_for_private_subnet) > 0 ? length(aws_subnet.private_subnets) : 0
   vpc_id = aws_vpc.main_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
@@ -166,7 +169,7 @@ resource "aws_route_table" "private_subnet_internet_route" {
 }
 
 resource "aws_route_table_association" "private_subnet_bind" {
-  count = length(aws_nat_gateway.nat_gw_for_private_subnet) > 0 ? length(aws_subnet.private_subnets) : 0
+  count          = length(aws_nat_gateway.nat_gw_for_private_subnet) > 0 ? length(aws_subnet.private_subnets) : 0
   subnet_id      = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private_subnet_internet_route[count.index].id
   depends_on     = [aws_route_table.private_subnet_internet_route, aws_subnet.private_subnets]

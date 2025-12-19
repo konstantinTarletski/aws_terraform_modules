@@ -32,8 +32,8 @@ variable "private_subnets_cidrs" {
   type        = list(string)
   description = "Have Internet connection through NAT. !!Number of subnets can be bigger then AZ!!"
   default = [
-    //"10.0.101.0/24",
-    //"10.0.102.0/24",
+    "10.0.101.0/24",
+    "10.0.102.0/24",
     //"10.0.103.0/24"
   ]
 }
