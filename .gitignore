@@ -1,0 +1,7 @@
+.idea
+.tettaform
+tettaform.tfstate
+tettaform.tfstate.backup
+*/.tettaform
+*/tettaform.tfstate
+*/tettaform.tfstate.backup
