@@ -27,6 +27,11 @@ variable "git_repository_name" {
   default = "some-repository"
 }
 
+variable "ecr_force_delete" {
+  type = bool
+  default = false
+}
+
 variable "git_repository_token_link" {
   type    = string
   default = "https://token.actions.githubusercontent.com"
