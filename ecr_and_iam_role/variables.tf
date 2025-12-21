@@ -17,17 +17,17 @@ variable "docker_images_hold_count" {
   default = 5
 }
 
-variable "git-repository-owner" {
+variable "git_repository_owner" {
   type    = string
   default = "owner"
 }
 
-variable "git-repository-name" {
+variable "git_repository_name" {
   type    = string
   default = "some-repository"
 }
 
-variable "git-repository-token-link" {
+variable "git_repository_token_link" {
   type    = string
   default = "https://token.actions.githubusercontent.com"
 }

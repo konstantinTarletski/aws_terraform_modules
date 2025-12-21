@@ -55,13 +55,13 @@ resource "aws_iam_role" "ecr_pusher" {
       Condition = {
         StringLike = {
           //"token.actions.githubusercontent.com:sub" = "repo:ORG/REPO:*"
-          "token.actions.githubusercontent.com:sub" = "repo:${var.git-repository-owner}/${var.git-repository-name}:*"
+          "token.actions.githubusercontent.com:sub" = "repo:${var.git_repository_owner}/${var.git_repository_name}:*"
         }
       }
     }]
   })
   tags = merge(local.default_tags, {
-    Name = "ECR-pusher_repo=${var.git-repository-name}${local.workspace}"
+    Name = "ECR-pusher_repo=${var.git_repository_name}${local.workspace}"
   })
 }
 
@@ -91,11 +91,11 @@ resource "aws_iam_role_policy" "ecr_push_policy" {
 }
 
 data "tls_certificate" "git_cert" {
-  url = var.git-repository-token-link
+  url = var.git_repository_token_link
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = var.git-repository-token-link
+  url             = var.git_repository_token_link
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.git_cert.certificates[0].sha1_fingerprint]
   tags = merge(local.default_tags, {
