@@ -6,6 +6,10 @@ output "aws_iam_pusher_role_id" {
   value = aws_iam_role.ecr_pusher.id
 }
 
+output "aws_iam_pusher_role_arn" {
+  value = aws_iam_role.ecr_pusher.arn
+}
+
 output "aws_ecr_repository_name" {
   value = aws_ecr_repository.ecr_repository.name
 }
