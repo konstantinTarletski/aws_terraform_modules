@@ -1,5 +1,9 @@
-output "vpc_id_and_cidr" {
-  value = {(aws_vpc.main_vpc.id) = aws_vpc.main_vpc.cidr_block}
+output "vpc_id" {
+  value = aws_vpc.main_vpc.id
+}
+
+output "vpc_cidr" {
+  value = aws_vpc.main_vpc.cidr_block
 }
 
 output "public_subnets_ids_and_cidrs" {
