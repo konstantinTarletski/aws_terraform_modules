@@ -91,10 +91,6 @@ resource "aws_iam_role_policy" "ecr_push_policy" {
   })
 }
 
-data "tls_certificate" "git_cert" {
-  url = var.git_repository_token_link
-}
-
 resource "aws_iam_openid_connect_provider" "github" {
   url             = var.git_repository_token_link
   client_id_list  = ["sts.amazonaws.com"]
