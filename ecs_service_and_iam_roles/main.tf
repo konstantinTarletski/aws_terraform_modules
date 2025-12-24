@@ -118,8 +118,8 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([
     {
-      name      = "app"
-      image     = var.docker_image_name
+      name      = "${var.application_name}_container_definitions"
+      image     = var.ecr_repository_url != "" ? "${var.ecr_repository_url}:${var.docker_image_tag}" : var.docker_default_image_name
       essential = true
       portMappings = [
         for p in var.application_ports : {
@@ -138,13 +138,14 @@ resource "aws_ecs_task_definition" "app" {
       }
     }
   ])
+
 }
 
 resource "aws_ecs_service" "main" {
   name            = "game-sys-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 1
+  desired_count   = var.instance_replica_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -155,4 +156,5 @@ resource "aws_ecs_service" "main" {
     assign_public_ip = true
     security_groups  = [aws_security_group.ecs_public_sg.id]
   }
+  ignore_changes = [task_definition, desired_count]
 }

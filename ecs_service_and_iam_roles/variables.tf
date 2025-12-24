@@ -23,6 +23,11 @@ variable "application_name" {
   type = string
 }
 
+variable "instance_replica_count" {
+  type = number
+  default = 1
+}
+
 variable "aws_cloudwatch_log_group" {
   type = string
 }
@@ -52,9 +57,19 @@ variable "task_definition_memory" {
   default = "512"
 }
 
-variable "docker_image_name" {
+variable "ecr_repository_url" {
+  type = string
+  default = ""
+}
+
+variable "docker_default_image_name" {
   type    = string
-  default = "tomcat:latest"
+  default = "tomcat"
+}
+
+variable "docker_image_tag" {
+  type    = string
+  default = "latest"
 }
 
 variable "docker_image_strict_pull_policy" {
