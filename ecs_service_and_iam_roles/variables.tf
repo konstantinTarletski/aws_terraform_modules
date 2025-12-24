@@ -56,3 +56,8 @@ variable "docker_image_name" {
   type    = string
   default = "tomcat:latest"
 }
+
+variable "docker_image_strict_pull_policy" {
+  type    = bool
+  default = true
+}

@@ -60,9 +60,7 @@ resource "aws_iam_policy" "strict_ecr_pull" {
           "ecr:BatchGetImage"
         ]
         Effect   = "Allow"
-        Resource = "*"
-        //TODO FIXME Uncomment
-        //Resource = "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/${var.ecr_repository_name}"
+        Resource = var.docker_image_strict_pull_policy ? "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/${var.ecr_repository_name}" : "*"
       },
       {
         Action   = "ecr:GetAuthorizationToken"
