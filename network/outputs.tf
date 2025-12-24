@@ -6,15 +6,27 @@ output "vpc_cidr" {
   value = aws_vpc.main_vpc.cidr_block
 }
 
-output "public_subnets_ids_and_cidrs" {
+output "public_subnets_ids" {
+  value = aws_subnet.public_subnets[*].id
+}
+
+output "public_subnets_ids_and_cidrs_by_az" {
   value = local.public_subnets_by_az
 }
 
-output "private_subnets_ids_and_cidrs" {
+output "private_subnets_ids" {
+  value = aws_subnet.private_subnets[*].id
+}
+
+output "private_subnets_ids_and_cidrs_by_az" {
   value = local.private_subnets_by_az
 }
 
-output "db_subnets_ids_and_cidrs" {
+output "db_subnets_ids" {
+  value = aws_subnet.db_subnets[*].id
+}
+
+output "db_subnets_ids_and_cidrs_by_az" {
   value = local.db_subnets_by_az
 }
 
