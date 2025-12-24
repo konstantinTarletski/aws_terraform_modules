@@ -17,3 +17,7 @@ output "aws_ecr_repository_name" {
 output "aws_ecr_repository_id" {
   value = aws_ecr_repository.ecr_repository.id
 }
+
+output "aws_ecr_repository_url" {
+  value = aws_ecr_repository.ecr_repository.repository_url
+}
