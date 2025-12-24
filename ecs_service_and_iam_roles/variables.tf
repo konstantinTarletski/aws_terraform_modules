@@ -33,8 +33,8 @@ variable "aws_cloudwatch_log_retention_in_days" {
 }
 
 variable "application_ports" {
-  type    = list(string)
-  default = ["8080"]
+  type    = list(number)
+  default = [8080]
 }
 
 variable "application_sg_ingress_cider_blocks" {
