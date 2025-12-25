@@ -166,7 +166,7 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_ecs_service" "main" {
-  name            = "game-sys-service"
+  name            =  "${var.application_name}${var.environment}${local.workspace}_service"
   cluster         = local.ecs_cluster_id
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = var.instance_replica_count
