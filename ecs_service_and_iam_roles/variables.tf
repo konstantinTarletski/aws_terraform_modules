@@ -1,3 +1,8 @@
+variable "environment" {
+  type    = string
+  default = "dev"
+}
+
 variable "default_tags" {
   type        = map(string)
   description = "List of default tags"
@@ -5,11 +10,6 @@ variable "default_tags" {
     Manufactor = "terraform",
     Design     = "tarlekon"
   }
-}
-
-variable "environment" {
-  type    = string
-  default = "dev"
 }
 
 variable "existing_cluster_id" {
