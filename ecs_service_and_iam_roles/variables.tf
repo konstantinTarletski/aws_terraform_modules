@@ -12,6 +12,10 @@ variable "default_tags" {
   }
 }
 
+variable "some_test" {
+  default = "abc"
+}
+
 variable "existing_cluster_id" {
   description = "ID of existing cluster. If not defined, new one will be created"
   type        = string
