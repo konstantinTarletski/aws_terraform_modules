@@ -1,5 +1,18 @@
-resource "aws_ecs_cluster" "main" {
-  name = var.cluster_name
+locals {
+  ecs_cluster_id = var.existing_cluster_id != null ? data.aws_ecs_cluster.existing[0].id : aws_ecs_cluster.new_cluster[0].id
+  workspace = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
+  default_tags = merge(var.default_tags, {
+    Workspace = terraform.workspace
+  })
+}
+
+//Creating only "existing" not defined
+resource "aws_ecs_cluster" "new_cluster" {
+  count = var.existing_cluster_id == null ? 1 : 0
+  name  = "Cluster_${var.environment}${local.workspace}"
+  tags = merge(local.default_tags, {
+    Name = "ECS_Cluster-${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_cloudwatch_log_group" "ecs_logs" {
@@ -8,7 +21,7 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
 }
 
 resource "aws_security_group" "ecs_public_sg" {
-  name        = "SG_for_appliation_${var.application_name}"
+  name        = "SG_for_appliation_${var.application_name}${var.environment}${local.workspace}"
   description = "Opens ports dynamically"
   vpc_id      = var.vpc_id
 
@@ -29,13 +42,13 @@ resource "aws_security_group" "ecs_public_sg" {
     protocol    = "-1"
   }
 
-  tags = {
-    Name = "Aws Linux SG"
-  }
+  tags = merge(local.default_tags, {
+    Name = "ECS_SG-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_iam_role" "ecs_exec_role" {
-  name = "${var.application_name}-execution-role"
+  name = "${var.application_name}_execution-role_${var.environment}${local.workspace}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -45,10 +58,13 @@ resource "aws_iam_role" "ecs_exec_role" {
       Principal = { Service = "ecs-tasks.amazonaws.com" }
     }]
   })
+  tags = merge(local.default_tags, {
+    Name = "ECS_exec_role-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_iam_policy" "strict_ecr_pull" {
-  name = "${var.application_name}_strict_ecr_pull_policy"
+  name = "${var.application_name}_strict_ecr_pull_policy_${var.environment}${local.workspace}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -77,11 +93,17 @@ resource "aws_iam_policy" "strict_ecr_pull" {
       }
     ]
   })
+  tags = merge(local.default_tags, {
+    Name = "ECS_exec_policy-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "attach_strict_pull" {
   role       = aws_iam_role.ecs_exec_role.name
   policy_arn = aws_iam_policy.strict_ecr_pull.arn
+  tags = merge(local.default_tags, {
+    Name = "ECS_exec_policy_attachment-${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_iam_policy" "github_deploy_policy" {
@@ -101,11 +123,17 @@ resource "aws_iam_policy" "github_deploy_policy" {
       }
     ]
   })
+  tags = merge(local.default_tags, {
+    Name = "ECS_deploy_policy-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "attach_github" {
   role       = "ecr-pusher_repo_${var.application_name}"
   policy_arn = aws_iam_policy.github_deploy_policy.arn
+  tags = merge(local.default_tags, {
+    Name = "ECS_deploy_policy_attachment-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_ecs_task_definition" "app" {
@@ -138,12 +166,14 @@ resource "aws_ecs_task_definition" "app" {
       }
     }
   ])
-
+  tags = merge(local.default_tags, {
+    Name = "ECS_task_definition-${var.application_name}${var.environment}${local.workspace}"
+  })
 }
 
 resource "aws_ecs_service" "main" {
   name            = "game-sys-service"
-  cluster         = aws_ecs_cluster.main.id
+  cluster         = local.ecs_cluster_id
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = var.instance_replica_count
   launch_type     = "FARGATE"
@@ -157,4 +187,7 @@ resource "aws_ecs_service" "main" {
     security_groups  = [aws_security_group.ecs_public_sg.id]
   }
   ignore_changes = [task_definition, desired_count]
+  tags = merge(local.default_tags, {
+    Name = "ECS_service-${var.application_name}${var.environment}${local.workspace}"
+  })
 }

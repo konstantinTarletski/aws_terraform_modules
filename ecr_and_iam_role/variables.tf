@@ -1,6 +1,5 @@
 variable "ecr_repository_name" {
   type    = string
-  default = "some_name"
 }
 
 variable "default_tags" {
@@ -24,7 +23,6 @@ variable "git_repository_owner" {
 
 variable "git_repository_name" {
   type    = string
-  default = "some-repository"
 }
 
 variable "ecr_force_delete" {

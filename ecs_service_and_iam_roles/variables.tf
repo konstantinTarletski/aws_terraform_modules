@@ -1,6 +1,21 @@
-variable "cluster_name" {
+variable "default_tags" {
+  type        = map(string)
+  description = "List of default tags"
+  default = {
+    Manufactor = "terraform",
+    Design     = "tarlekon"
+  }
+}
+
+variable "environment" {
   type    = string
-  default = "dev-cluster"
+  default = "dev"
+}
+
+variable "existing_cluster_id" {
+  description = "ID of existing cluster. If not defined, new one will be created"
+  type        = string
+  default     = null
 }
 
 variable "vpc_id" {
