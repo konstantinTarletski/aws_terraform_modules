@@ -39,7 +39,7 @@ variable "application_name" {
 }
 
 variable "instance_replica_count" {
-  type = number
+  type    = number
   default = 1
 }
 
@@ -73,7 +73,7 @@ variable "task_definition_memory" {
 }
 
 variable "ecr_repository_url" {
-  type = string
+  type    = string
   default = ""
 }
 

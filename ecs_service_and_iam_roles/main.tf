@@ -1,6 +1,6 @@
 locals {
   ecs_cluster_id = var.existing_cluster_id != null ? data.aws_ecs_cluster.existing[0].id : aws_ecs_cluster.new_cluster[0].id
-  workspace = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
+  workspace      = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
   default_tags = merge(var.default_tags, {
     Workspace = terraform.workspace
   })
