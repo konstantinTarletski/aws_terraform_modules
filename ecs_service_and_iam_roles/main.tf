@@ -101,9 +101,6 @@ resource "aws_iam_policy" "strict_ecr_pull" {
 resource "aws_iam_role_policy_attachment" "attach_strict_pull" {
   role       = aws_iam_role.ecs_exec_role.name
   policy_arn = aws_iam_policy.strict_ecr_pull.arn
-  tags = merge(local.default_tags, {
-    Name = "ECS_exec_policy_attachment-${var.environment}${local.workspace}"
-  })
 }
 
 resource "aws_iam_policy" "github_deploy_policy" {
@@ -131,9 +128,6 @@ resource "aws_iam_policy" "github_deploy_policy" {
 resource "aws_iam_role_policy_attachment" "attach_github" {
   role       = "ecr-pusher_repo_${var.application_name}"
   policy_arn = aws_iam_policy.github_deploy_policy.arn
-  tags = merge(local.default_tags, {
-    Name = "ECS_deploy_policy_attachment-${var.application_name}${var.environment}${local.workspace}"
-  })
 }
 
 resource "aws_ecs_task_definition" "app" {
@@ -186,7 +180,9 @@ resource "aws_ecs_service" "main" {
     assign_public_ip = true
     security_groups  = [aws_security_group.ecs_public_sg.id]
   }
-  ignore_changes = [task_definition, desired_count]
+  lifecycle {
+    ignore_changes = [task_definition, desired_count]
+  }
   tags = merge(local.default_tags, {
     Name = "ECS_service-${var.application_name}${var.environment}${local.workspace}"
   })
