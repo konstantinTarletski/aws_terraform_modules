@@ -170,8 +170,18 @@ resource "aws_iam_policy" "ecs_update_policy" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["ecs:DescribeServices", "ecs:UpdateService"]
-        Resource = var.git_open_id_provider_arn
+        Action   = [
+          "ecs:DescribeServices",
+          "ecs:DescribeClusters"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "ecs:UpdateService"
+        ]
+        Resource = aws_ecs_service.main.arn
       }
     ]
   })
@@ -181,9 +191,6 @@ resource "aws_iam_role_policy_attachment" "attach_ecs" {
   role       = aws_iam_role.ecs_deployer_role.name
   policy_arn = aws_iam_policy.ecs_update_policy.arn
 }
-
-
-
 
 resource "aws_ecs_task_definition" "app" {
   family                   = var.git_repository_name
