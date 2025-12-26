@@ -34,9 +34,15 @@ variable "ecr_repository_name" {
   type = string
 }
 
-variable "application_name" {
-  type = string
+variable "git_repository_owner" {
+  type    = string
 }
+
+variable "git_repository_name" {
+  type    = string
+  description = "Will be used like \"application name\" in tags and resource names"
+}
+
 
 variable "instance_replica_count" {
   type    = number
@@ -90,4 +96,8 @@ variable "docker_image_tag" {
 variable "docker_image_strict_pull_policy" {
   type    = bool
   default = true
+}
+
+variable "git_open_id_provider_arn" {
+  type    = string
 }

@@ -21,7 +21,7 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
 }
 
 resource "aws_security_group" "ecs_public_sg" {
-  name        = "SG_for_appliation_${var.application_name}${var.environment}${local.workspace}"
+  name        = "SG_for_appliation_${var.git_repository_name}${var.environment}${local.workspace}"
   description = "Opens ports dynamically"
   vpc_id      = var.vpc_id
 
@@ -43,12 +43,14 @@ resource "aws_security_group" "ecs_public_sg" {
   }
 
   tags = merge(local.default_tags, {
-    Name = "ECS_SG-${var.application_name}${var.environment}${local.workspace}"
+    Name = "ECS_SG-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }
 
+#-----------------------------Role for "Task Definition" for able to write logs and pull image-----------------------------#
+
 resource "aws_iam_role" "ecs_exec_role" {
-  name = "${var.application_name}_execution-role_${var.environment}${local.workspace}"
+  name = "${var.git_repository_name}_execution-role_${var.environment}${local.workspace}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -59,12 +61,12 @@ resource "aws_iam_role" "ecs_exec_role" {
     }]
   })
   tags = merge(local.default_tags, {
-    Name = "ECS_exec_role-${var.application_name}${var.environment}${local.workspace}"
+    Name = "ECS_exec_role-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }
 
 resource "aws_iam_policy" "strict_ecr_pull" {
-  name = "${var.application_name}_strict_ecr_pull_policy_${var.environment}${local.workspace}"
+  name = "${var.git_repository_name}_strict_ecr_pull_policy_${var.environment}${local.workspace}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -94,7 +96,7 @@ resource "aws_iam_policy" "strict_ecr_pull" {
     ]
   })
   tags = merge(local.default_tags, {
-    Name = "ECS_exec_policy-${var.application_name}${var.environment}${local.workspace}"
+    Name = "ECS_exec_policy-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }
 
@@ -103,7 +105,9 @@ resource "aws_iam_role_policy_attachment" "attach_strict_pull" {
   policy_arn = aws_iam_policy.strict_ecr_pull.arn
 }
 
-resource "aws_iam_policy" "github_deploy_policy" {
+#-----------------------------Role for "GitHubAction" for able pass role to task_definition -----------------------------#
+
+/*resource "aws_iam_policy" "github_deploy_policy" {
   name = "GithubDeployOnly"
   policy = jsonencode({
     Version = "2012-10-17"
@@ -125,13 +129,64 @@ resource "aws_iam_policy" "github_deploy_policy" {
   })
 }
 
+
+
 resource "aws_iam_role_policy_attachment" "attach_github" {
   role       = "ecr-pusher_repo_${var.application_name}"
   policy_arn = aws_iam_policy.github_deploy_policy.arn
 }
+*/
+#-----------------------------Role for "GitHubAction" for able to "push" only service, not task definition ! -----------------------------#
+// command : aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE } --force-new-deployment --region ${{ env.AWS_REGION }}
+
+resource "aws_iam_role" "ecs_deployer_role" {
+  name = "ecs_deployer_role_${var.git_repository_name}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Effect = "Allow"
+      Principal = {
+        Federated = var.git_open_id_provider_arn
+      }
+      Condition = {
+        StringLike = {
+          //Any my repo
+          //"token.actions.githubusercontent.com:sub" = "repo:ORG/REPO:*"
+          //Example strict repo, any branch
+          //"token.actions.githubusercontent.com:sub" : "repo:konstantinTarletski/game-sys-test-task:*"
+          //"Same" but with variables
+          "token.actions.githubusercontent.com:sub" = "repo:${var.git_repository_owner}/${var.git_repository_name}:*"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "ecs_update_policy" {
+  name = "ECS-Update-Only"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ecs:DescribeServices", "ecs:UpdateService"]
+        Resource = var.git_open_id_provider_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_ecs" {
+  role       = aws_iam_role.ecs_deployer_role.name
+  policy_arn = aws_iam_policy.ecs_update_policy.arn
+}
+
+
+
 
 resource "aws_ecs_task_definition" "app" {
-  family                   = var.application_name
+  family                   = var.git_repository_name
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.task_definition_cpu
@@ -140,7 +195,7 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([
     {
-      name      = "${var.application_name}_container_definitions"
+      name      = "${var.git_repository_name}_container_definitions"
       image     = var.ecr_repository_url != "" ? "${var.ecr_repository_url}:${var.docker_image_tag}" : var.docker_default_image_name
       essential = true
       portMappings = [
@@ -161,16 +216,18 @@ resource "aws_ecs_task_definition" "app" {
     }
   ])
   tags = merge(local.default_tags, {
-    Name = "ECS_task_definition-${var.application_name}${var.environment}${local.workspace}"
+    Name = "ECS_task_definition-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }
 
 resource "aws_ecs_service" "main" {
-  name            =  "${var.application_name}${var.environment}${local.workspace}_service"
-  cluster         = local.ecs_cluster_id
-  task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = var.instance_replica_count
-  launch_type     = "FARGATE"
+  name                               = "${var.git_repository_name}${var.environment}${local.workspace}_service"
+  cluster                            = local.ecs_cluster_id
+  task_definition                    = aws_ecs_task_definition.app.arn
+  desired_count                      = var.instance_replica_count
+  launch_type                        = "FARGATE"
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
 
   network_configuration {
     subnets = var.subnets_ids
@@ -184,6 +241,6 @@ resource "aws_ecs_service" "main" {
     ignore_changes = [task_definition, desired_count]
   }
   tags = merge(local.default_tags, {
-    Name = "ECS_service-${var.application_name}${var.environment}${local.workspace}"
+    Name = "ECS_service-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }

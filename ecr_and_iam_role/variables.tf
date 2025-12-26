@@ -18,7 +18,6 @@ variable "docker_images_hold_count" {
 
 variable "git_repository_owner" {
   type    = string
-  default = "owner"
 }
 
 variable "git_repository_name" {

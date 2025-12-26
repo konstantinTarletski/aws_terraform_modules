@@ -44,13 +44,13 @@ resource "aws_ecr_lifecycle_policy" "keep_last_x" {
 }
 
 resource "aws_iam_role" "ecr_pusher" {
-  name = "ecr-pusher_repo_${var.ecr_repository_name}${local.workspace}"
+  name = "ecr_pusher_repo_${var.ecr_repository_name}${local.workspace}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.github.arn
+        Federated = aws_iam_openid_connect_provider.git_open_id_provider.arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
@@ -91,7 +91,7 @@ resource "aws_iam_role_policy" "ecr_push_policy" {
   })
 }
 
-resource "aws_iam_openid_connect_provider" "github" {
+resource "aws_iam_openid_connect_provider" "git_open_id_provider" {
   url             = var.git_repository_token_link
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.git_cert.certificates[0].sha1_fingerprint]

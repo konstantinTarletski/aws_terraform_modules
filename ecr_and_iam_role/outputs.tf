@@ -21,3 +21,7 @@ output "aws_ecr_repository_id" {
 output "aws_ecr_repository_url" {
   value = aws_ecr_repository.ecr_repository.repository_url
 }
+
+output "git_open_id_provider_arn" {
+  value = aws_iam_openid_connect_provider.git_open_id_provider.arn
+}
