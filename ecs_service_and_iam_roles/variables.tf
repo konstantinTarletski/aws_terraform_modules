@@ -43,7 +43,6 @@ variable "git_repository_name" {
   description = "Will be used like \"application name\" in tags and resource names"
 }
 
-
 variable "instance_replica_count" {
   type    = number
   default = 1
@@ -78,9 +77,17 @@ variable "task_definition_memory" {
   default = "512"
 }
 
+variable "environment_variables" {
+  description = "Environment variables for task definition"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
 variable "ecr_repository_url" {
   type    = string
-  default = ""
 }
 
 variable "docker_default_image_name" {

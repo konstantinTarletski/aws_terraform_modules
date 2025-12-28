@@ -205,6 +205,7 @@ resource "aws_ecs_task_definition" "app" {
       name      = "${var.git_repository_name}_container_definitions"
       image     = var.ecr_repository_url != "" ? "${var.ecr_repository_url}:${var.docker_image_tag}" : var.docker_default_image_name
       essential = true
+      "environment": var.environment_variables,
       portMappings = [
         for p in var.application_ports : {
           containerPort = p
