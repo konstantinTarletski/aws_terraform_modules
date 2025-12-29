@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.27.0"
+    }
+  }
+}
+
 locals {
   ecs_cluster_id = var.existing_cluster_id != null ? data.aws_ecs_cluster.existing[0].id : aws_ecs_cluster.new_cluster[0].id
   workspace      = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
