@@ -39,8 +39,8 @@ resource "aws_security_group" "ecs_sg" {
     for_each = var.ecs_sg_application_ports_and_tg_arn
     content {
       cidr_blocks     = var.application_sg_ingress_cider_blocks
-      from_port       = ingress.value
-      to_port         = ingress.value
+      from_port       = ingress.key
+      to_port         = ingress.key
       protocol        = "tcp"
       security_groups = var.ecs_sg_ingress_security_groups
     }
