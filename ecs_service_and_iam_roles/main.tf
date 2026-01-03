@@ -41,7 +41,7 @@ resource "aws_security_group" "ecs_sg" {
       from_port   = ingress.value
       to_port     = ingress.value
       protocol    = "tcp"
-      security_groups = [var.ecs_sg_ingress_security_groups]
+      security_groups = var.ecs_sg_ingress_security_groups
     }
   }
 
