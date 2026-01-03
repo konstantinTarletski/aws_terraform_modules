@@ -60,7 +60,7 @@ variable "aws_cloudwatch_log_retention_in_days" {
 variable "ecs_sg_application_ports" {
   type    = list(number)
   default = [8080]
-  description = "Application ports allowed for ingress for ECS \"8080\" default for tomcat"
+  description = "Application ports allowed for ingress for ECS 8080 default for tomcat"
 }
 
 variable "ecs_sg_ingress_security_groups" {

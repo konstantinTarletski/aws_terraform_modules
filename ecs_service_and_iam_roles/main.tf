@@ -217,7 +217,7 @@ resource "aws_ecs_task_definition" "app" {
       essential = true
       "environment": var.environment_variables,
       portMappings = [
-        for p in var.application_ports : {
+        for p in var.ecs_sg_application_ports : {
           containerPort = p
           hostPort      = p
           protocol      = "tcp"
