@@ -29,18 +29,19 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
   retention_in_days = var.aws_cloudwatch_log_retention_in_days
 }
 
-resource "aws_security_group" "ecs_public_sg" {
+resource "aws_security_group" "ecs_sg" {
   name        = "SG_for_appliation_${var.git_repository_name}${var.environment}${local.workspace}"
   description = "Opens ports dynamically"
   vpc_id      = var.vpc_id
 
   dynamic "ingress" {
-    for_each = var.application_ports
+    for_each = var.ecs_sg_application_ports
     content {
       cidr_blocks = var.application_sg_ingress_cider_blocks
       from_port   = ingress.value
       to_port     = ingress.value
       protocol    = "tcp"
+      security_groups = [var.ecs_sg_ingress_security_groups]
     }
   }
 
@@ -252,7 +253,7 @@ resource "aws_ecs_service" "main" {
     //but in not works for "Fargate"
     // There are "special" for "Fargate", see next:
     assign_public_ip = true
-    security_groups  = [aws_security_group.ecs_public_sg.id]
+    security_groups  = [aws_security_group.ecs_sg.id]
   }
   lifecycle {
     ignore_changes = [task_definition, desired_count]
