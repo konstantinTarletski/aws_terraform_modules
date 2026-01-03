@@ -64,7 +64,7 @@ variable "ecs_sg_application_ports" {
 }
 
 variable "ecs_sg_ingress_security_groups" {
-  type    = list(number)
+  type    = list(string)
   description = "Application groups allowed for ingress for ECS"
 }
 
