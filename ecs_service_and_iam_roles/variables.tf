@@ -63,11 +63,6 @@ variable "ecs_sg_application_ports_and_tg_arn" {
   description = "Application ports allowed for ingress for ECS 8080 default for tomcat"
 }
 
-variable "target_group_arn" {
-  type        = string
-  description = "For connect LB"
-}
-
 variable "ecs_sg_ingress_security_groups" {
   type        = list(string)
   description = "Application groups allowed for ingress for ECS"
