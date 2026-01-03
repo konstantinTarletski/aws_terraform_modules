@@ -35,11 +35,11 @@ variable "ecr_repository_name" {
 }
 
 variable "git_repository_owner" {
-  type    = string
+  type = string
 }
 
 variable "git_repository_name" {
-  type    = string
+  type        = string
   description = "Will be used like \"application name\" in tags and resource names"
 }
 
@@ -57,14 +57,19 @@ variable "aws_cloudwatch_log_retention_in_days" {
   default = 7
 }
 
-variable "ecs_sg_application_ports" {
-  type    = list(number)
-  default = [8080]
+variable "ecs_sg_application_ports_and_tg_arn" {
+  type        = map(object({ tg_arn = string }))
+  default     = { "8080" = { tg_arn = null } }
   description = "Application ports allowed for ingress for ECS 8080 default for tomcat"
 }
 
+variable "target_group_arn" {
+  type        = string
+  description = "For connect LB"
+}
+
 variable "ecs_sg_ingress_security_groups" {
-  type    = list(string)
+  type        = list(string)
   description = "Application groups allowed for ingress for ECS"
 }
 
@@ -93,7 +98,7 @@ variable "environment_variables" {
 }
 
 variable "ecr_repository_url" {
-  type    = string
+  type = string
 }
 
 variable "docker_default_image_name" {
@@ -112,5 +117,5 @@ variable "docker_image_strict_pull_policy" {
 }
 
 variable "git_open_id_provider_arn" {
-  type    = string
+  type = string
 }

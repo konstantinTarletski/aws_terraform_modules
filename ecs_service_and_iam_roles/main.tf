@@ -10,6 +10,7 @@ terraform {
 locals {
   ecs_cluster_id = var.existing_cluster_id != null ? data.aws_ecs_cluster.existing[0].id : aws_ecs_cluster.new_cluster[0].id
   workspace      = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
+  container_name = "${var.git_repository_name}-container-definitions"
   default_tags = merge(var.default_tags, {
     Workspace = terraform.workspace
   })
@@ -35,12 +36,12 @@ resource "aws_security_group" "ecs_sg" {
   vpc_id      = var.vpc_id
 
   dynamic "ingress" {
-    for_each = var.ecs_sg_application_ports
+    for_each = var.ecs_sg_application_ports_and_tg_arn
     content {
-      cidr_blocks = var.application_sg_ingress_cider_blocks
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
+      cidr_blocks     = var.application_sg_ingress_cider_blocks
+      from_port       = ingress.value
+      to_port         = ingress.value
+      protocol        = "tcp"
       security_groups = var.ecs_sg_ingress_security_groups
     }
   }
@@ -179,16 +180,16 @@ resource "aws_iam_policy" "ecs_update_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ecs:DescribeServices",
           "ecs:DescribeClusters"
         ]
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ecs:UpdateService"
         ]
         Resource = aws_ecs_service.main.arn
@@ -212,12 +213,12 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([
     {
-      name      = "${var.git_repository_name}_container_definitions"
+      name      = local.container_name
       image     = var.ecr_repository_url != "" ? "${var.ecr_repository_url}:${var.docker_image_tag}" : var.docker_default_image_name
       essential = true
-      "environment": var.environment_variables,
+      "environment" : var.environment_variables,
       portMappings = [
-        for p in var.ecs_sg_application_ports : {
+        for p in var.ecs_sg_application_ports_and_tg_arn : {
           containerPort = p
           hostPort      = p
           protocol      = "tcp"
@@ -246,6 +247,15 @@ resource "aws_ecs_service" "main" {
   launch_type                        = "FARGATE"
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
+
+  dynamic "load_balancer" {
+    for_each = { for k, v in var.ecs_sg_application_ports_and_tg_arn : k => v if v.tg_arn != null }
+    content {
+      target_group_arn = load_balancer.value.tg_arn
+      container_name   = local.container_name
+      container_port   = tonumber(load_balancer.key)
+    }
+  }
 
   network_configuration {
     subnets = var.subnets_ids
