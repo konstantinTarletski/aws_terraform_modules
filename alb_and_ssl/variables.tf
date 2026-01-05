@@ -30,11 +30,12 @@ variable "alb_port_mappings" {
 variable "alb_port" {
   type    = number
   default = 80
+  description = "ALB port"
 }
 
 variable "alb_protocol" {
   type = string
-  value       = "HTTP"
+  default       = "HTTP"
   description = "ALB protocol"
 }
 
@@ -54,7 +55,7 @@ variable "alb_sg_ingress_ports_and_sg" {
 
 variable "alb_sg_ingress_ports_and_cidr" {
   type        = map(list(string))
-  default     = { '80' = ['0.0.0.0/0'] }
+  default     = { "80" = ["0.0.0.0/0"] }
   description = "Default is: { '80' = ['0.0.0.0/0'] }"
 }
 
