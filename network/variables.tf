@@ -14,6 +14,7 @@ variable "default_tags" {
   default = {
     Manufactor = "terraform",
     Design     = "tarlekon"
+    Module = "network"
   }
 }
 

@@ -8,6 +8,7 @@ variable "default_tags" {
   default = {
     Manufactor = "terraform",
     Design     = "tarlekon"
+    Module = "ecr_and_iam_role"
   }
 }
 

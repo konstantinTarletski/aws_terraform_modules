@@ -9,6 +9,7 @@ variable "default_tags" {
   default = {
     Manufactor = "terraform",
     Design     = "tarlekon"
+    Module = "ecs_service_and_iam_roles"
   }
 }
 
@@ -60,18 +61,36 @@ variable "aws_cloudwatch_log_retention_in_days" {
 variable "ecs_sg_application_ports_and_tg_arn" {
   type        = map(object({ tg_arn = string }))
   default     = { "8080" = { tg_arn = null } }
-  description = "Application ports allowed for ingress for ECS 8080 default for tomcat"
+  description = "Application ports allowed for ingress for ECS 8080 default for tomcat 'tg_arn' - for \"link\" with load_balancer"
 }
 
-variable "ecs_sg_ingress_security_groups" {
-  type        = list(string)
-  description = "Application groups allowed for ingress for ECS"
+#-----------------------------SG Configuration-----------------------------#
+
+variable "ecs_sg_ingress_ports_and_sg" {
+  type        = map(list(string))
+  default     = {}
+  description = "Example: { '8080' = ['sg-123', 'sg-456'] }"
 }
 
-variable "application_sg_ingress_cider_blocks" {
-  type    = list(string)
-  default = ["0.0.0.0/0"]
+variable "ecs_sg_ingress_ports_and_cidr" {
+  type        = map(list(string))
+  default     = {}
+  description = "Example: { '8080' = ['10.0.0.0/16', '1.2.3.4/32'] }"
 }
+
+variable "ecs_sg_egress_ports_and_sg" {
+  type        = map(list(string))
+  default     = {}
+  description = "Example: { '443' = ['sg-123', 'sg-456'] }"
+}
+
+variable "ecs_sg_egress_ports_and_cidr" {
+  type        = map(list(string))
+  default     = { "443" = ["0.0.0.0/0"] }
+  description = "Default is : { '443' = ['0.0.0.0/0'] }; For able Docker images download"
+}
+
+#-----------------------------SG Configuration-----------------------------#
 
 variable "task_definition_cpu" {
   type    = string

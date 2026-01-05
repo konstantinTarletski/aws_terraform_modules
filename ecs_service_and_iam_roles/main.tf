@@ -16,12 +16,12 @@ locals {
   })
 }
 
-//Creating only "existing" not defined
+//Creating new only if "existing" not defined
 resource "aws_ecs_cluster" "new_cluster" {
   count = var.existing_cluster_id == null ? 1 : 0
-  name  = "Cluster_${var.environment}${local.workspace}"
+  name  = "Cluster-${var.environment}${local.workspace}"
   tags = merge(local.default_tags, {
-    Name = "ECS_Cluster-${var.environment}${local.workspace}"
+    Name = "ECS-Cluster-${var.environment}${local.workspace}"
   })
 }
 
@@ -30,34 +30,27 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
   retention_in_days = var.aws_cloudwatch_log_retention_in_days
 }
 
+#----------------------------- SG and INGRESS/EGRESS RULES -----------------------------#
+
 resource "aws_security_group" "ecs_sg" {
-  name        = "SG_for_appliation_${var.git_repository_name}${var.environment}${local.workspace}"
-  description = "Opens ports dynamically"
+  name        = "SG-SG-${var.git_repository_name}${var.environment}${local.workspace}"
+  description = "Security Group for ECS ${var.git_repository_name}"
   vpc_id      = var.vpc_id
 
-  dynamic "ingress" {
-    for_each = var.ecs_sg_application_ports_and_tg_arn
-    content {
-      cidr_blocks     = var.application_sg_ingress_cider_blocks
-      from_port       = ingress.key
-      to_port         = ingress.key
-      protocol        = "tcp"
-      security_groups = var.ecs_sg_ingress_security_groups
-    }
-  }
-
-  egress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-  }
-
   tags = merge(local.default_tags, {
-    Name = "ECS_SG-${var.git_repository_name}${var.environment}${local.workspace}"
+    Name = "ECS-SG-${var.git_repository_name}${var.environment}${local.workspace}"
   })
 }
 
+module "dev_ecs_service" {
+  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor"
+  security_group_id      = aws_security_group.ecs_sg.id
+  ingress_ports_and_sg   = var.ecs_sg_ingress_ports_and_sg
+  ingress_ports_and_cidr = var.ecs_sg_ingress_ports_and_cidr
+  egress_ports_and_sg    = var.ecs_sg_egress_ports_and_sg
+  egress_ports_and_cidr  = var.ecs_sg_egress_ports_and_cidr
+  depends_on             = [aws_security_group.ecs_sg]
+}
 #-----------------------------Role for "Task Definition" for able to write logs and pull image-----------------------------#
 
 resource "aws_iam_role" "ecs_exec_role" {
