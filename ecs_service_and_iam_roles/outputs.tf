@@ -9,3 +9,7 @@ output "ecs_service_name" {
 output "ecs_service_arn" {
   value = aws_ecs_service.main.arn
 }
+
+output "ecs_sg_id" {
+  value = aws_security_group.ecs_sg.id
+}
