@@ -7,6 +7,8 @@ terraform {
   }
 }
 
+#-----------------------------AUTO RULE "KEY" GENERATION-----------------------------#
+
 resource "aws_vpc_security_group_ingress_rule" "ingress_cidr" {
   for_each = {
     for pair in flatten([
@@ -63,6 +65,28 @@ resource "aws_vpc_security_group_egress_rule" "egress_sg" {
       ]
     ]) : "${pair.port}_${pair.sg_id}" => pair
   }
+
+  security_group_id            = var.security_group_id
+  from_port                    = tonumber(each.value.port)
+  to_port                      = tonumber(each.value.port)
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = each.value.sg_id
+}
+
+#-----------------------------NAMED RULE "KEY"-----------------------------#
+
+resource "aws_vpc_security_group_ingress_rule" "egress_sg_named" {
+  for_each = var.ingress_ports_and_sg_named
+
+  security_group_id            = var.security_group_id
+  from_port                    = tonumber(each.value.port)
+  to_port                      = tonumber(each.value.port)
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = each.value.sg_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "egress_sg_named" {
+  for_each = var.egress_ports_and_sg_named
 
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)

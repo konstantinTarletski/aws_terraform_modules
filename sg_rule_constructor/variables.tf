@@ -3,6 +3,8 @@ variable "security_group_id" {
   description = "Security group id to populate with rules"
 }
 
+#-----------------------------AUTO RULE "KEY" GENERATION-----------------------------#
+
 variable "ingress_ports_and_sg" {
   type        = map(list(string))
   default     = {}
@@ -23,6 +25,27 @@ variable "egress_ports_and_sg" {
 
 variable "egress_ports_and_cidr" {
   type        = map(list(string))
-  default     = { "443" = ["0.0.0.0/0"] }
-  description = "Default is : { '443' = ['0.0.0.0/0'] }; For able Docker images download"
+  default     = {}
+  description = "Example : { '443' = ['0.0.0.0/0'] }"
 }
+
+#-----------------------------NAMED RULE "KEY"-----------------------------#
+
+variable "ingress_ports_and_sg_named" {
+  type = map(object({
+    port  = string
+    sg_id = string
+  }))
+  default     = {}
+  description = "Example: { 'rule_name_1' = {port = '8080', cidr = 'sg-123'} , 'rule_name_2' = {port = '8081', cidr = 'sg-456'} }"
+}
+
+variable "egress_ports_and_sg_named" {
+  type = map(object({
+    port  = string
+    sg_id = string
+  }))
+  default = {}
+  description = "Example: { 'rule_name_1' = {port = '8080', sg_id = 'sg-123'} , 'rule_name_2' = {port = '8081', sg_id = 'sg-456'} }"
+}
+
