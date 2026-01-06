@@ -21,7 +21,7 @@ resource "aws_vpc_security_group_ingress_rule" "ingress_cidr" {
   security_group_id = var.security_group_id
   from_port         = tonumber(each.value.port)
   to_port           = tonumber(each.value.port)
-  ip_protocol       = "tcp"
+  ip_protocol       = var.ip_protocol
   cidr_ipv4         = each.value.cidr
 }
 
@@ -37,7 +37,7 @@ resource "aws_vpc_security_group_ingress_rule" "ingress_sg" {
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)
   to_port                      = tonumber(each.value.port)
-  ip_protocol                  = "tcp"
+  ip_protocol                  = var.ip_protocol
   referenced_security_group_id = each.value.sg_id
 }
 
@@ -53,7 +53,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_cidr" {
   security_group_id = var.security_group_id
   from_port         = tonumber(each.value.port)
   to_port           = tonumber(each.value.port)
-  ip_protocol       = "tcp"
+  ip_protocol       = var.ip_protocol
   cidr_ipv4         = each.value.cidr
 }
 
@@ -81,7 +81,7 @@ resource "aws_vpc_security_group_ingress_rule" "egress_sg_named" {
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)
   to_port                      = tonumber(each.value.port)
-  ip_protocol                  = "tcp"
+  ip_protocol                  = var.ip_protocol
   referenced_security_group_id = each.value.sg_id
 }
 
@@ -91,6 +91,6 @@ resource "aws_vpc_security_group_egress_rule" "egress_sg_named" {
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)
   to_port                      = tonumber(each.value.port)
-  ip_protocol                  = "tcp"
+  ip_protocol                  = var.ip_protocol
   referenced_security_group_id = each.value.sg_id
 }

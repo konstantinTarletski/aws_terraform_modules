@@ -3,6 +3,12 @@ variable "security_group_id" {
   description = "Security group id to populate with rules"
 }
 
+variable "ip_protocol" {
+  type = string
+  default     = "tcp"
+  description = "Protocol for rule, default = 'tcp'"
+}
+
 #-----------------------------AUTO RULE "KEY" GENERATION-----------------------------#
 
 variable "ingress_ports_and_sg" {
