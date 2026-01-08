@@ -119,6 +119,7 @@ resource "aws_lb_listener" "alb_listener_redirect" {
 resource "aws_acm_certificate" "cert" {
   count             = var.existing_domain_name != null ? 1 : 0
   domain_name       = var.existing_domain_name
+  subject_alternative_names = ["*.${var.existing_domain_name}"]
   validation_method = "DNS"
 
   lifecycle {
@@ -155,10 +156,10 @@ resource "aws_acm_certificate_validation" "cert" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-resource "aws_route53_record" "domain_redirect" {
+resource "aws_route53_record" "hosted_zone_record_a_wildcard" {
   count   = var.existing_domain_name != null ? 1 : 0
   zone_id = data.aws_route53_zone.domain_hosted_zone[0].zone_id
-  name    = var.existing_domain_name
+  name    = "*.${var.existing_domain_name}"
   type    = "A"
 
   alias {
@@ -166,4 +167,17 @@ resource "aws_route53_record" "domain_redirect" {
     zone_id                = aws_lb.alb.zone_id
     evaluate_target_health = true
   }
+}
+
+  resource "aws_route53_record" "hosted_zone_record_a_domain" {
+    count   = var.existing_domain_name != null ? 1 : 0
+    zone_id = data.aws_route53_zone.domain_hosted_zone[0].zone_id
+    name    = var.existing_domain_name
+    type    = "A"
+
+    alias {
+      name                   = aws_lb.alb.dns_name
+      zone_id                = aws_lb.alb.zone_id
+      evaluate_target_health = true
+    }
 }
