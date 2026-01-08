@@ -35,6 +35,7 @@ variable "alb_http_port" {
 
 variable "existing_domain_name" {
   type        = string
+  default     = null
   description = "Domain name you owned in amazon, hosted zones NS and SOA suppose to be present"
 }
 
@@ -54,7 +55,7 @@ variable "alb_sg_ingress_ports_and_sg" {
 
 variable "alb_sg_ingress_ports_and_cidr" {
   type        = map(list(string))
-  default     = {     "80"  = ["0.0.0.0/0"], "443" = ["0.0.0.0/0"]  }
+  default     = { "80" = ["0.0.0.0/0"], "443" = ["0.0.0.0/0"] }
   description = "Default is: { '80' = ['0.0.0.0/0'] , '443' = ['0.0.0.0/0']}, Disable 443 if no domain !!!"
 }
 
