@@ -64,11 +64,99 @@ resource "aws_lb_target_group" "port_tg" {
   }
 }
 
-resource "aws_lb_listener" "alb_listener" {
+#-----------------------------HTTP MODE-----------------------------#
+//Done with separate resource names to make possible to switch mode "on fly"
+
+resource "aws_lb_listener" "alb_http_mode_listener" {
+  count             = var.existing_domain_name == null ? 1 : 0
+  load_balancer_arn = aws_lb.alb.arn
+  port              = var.alb_http_port
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.port_tg[local.default_port].arn
+  }
+}
+
+resource "aws_lb_listener_rule" "alb_http_mode_listener_rules" {
+  for_each = var.existing_domain_name == null ? {
+    for k, v in var.alb_port_mappings : k => v if !v.is_default
+  }: {}
+
+  listener_arn = one(aws_lb_listener.alb_http_mode_listener[*].arn)
+  priority     = each.value.priority
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.port_tg[each.key].arn
+  }
+
+  condition {
+    host_header {
+      values = ["${each.value.host}.${aws_lb.alb.dns_name}"]
+    }
+  }
+}
+
+#-----------------------------HTTPS MODE-----------------------------#
+//Done with separate resource names to make possible to switch mode "on fly"
+
+resource "aws_lb_listener" "alb_https_mode_listener" {
+  count             = var.existing_domain_name == null ?  0 : 1
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = local.ssl_policy
+  certificate_arn = one(aws_acm_certificate_validation.cert[*].certificate_arn)
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.port_tg[local.default_port].arn
+  }
+}
+
+resource "aws_lb_listener_rule" "alb_https_mode_listener_rules" {
+  for_each = var.existing_domain_name != null ? {
+    for k, v in var.alb_port_mappings : k => v if !v.is_default
+  }: {}
+
+  listener_arn = one(aws_lb_listener.alb_https_mode_listener[*].arn)
+  priority     = each.value.priority
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.port_tg[each.key].arn
+  }
+
+  condition {
+    host_header {
+      values = [ "${each.value.host}.${var.existing_domain_name}" ]
+    }
+  }
+}
+
+resource "aws_lb_listener" "alb_https_mode_listener_redirect" {
+  count             = var.existing_domain_name != null ? 1 : 0
+  load_balancer_arn = aws_lb.alb.arn
+  port              = var.alb_http_port
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+#-----------------------------OLD VERSION REMOVE !!!-----------------------------#
+/*resource "aws_lb_listener" "alb_http_listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = var.existing_domain_name != null ? 443 : var.alb_http_port
   protocol          = var.existing_domain_name != null ? "HTTPS" : "HTTP"
-  ssl_policy        = var.existing_domain_name != null ? local.ssl_policy : null
+  ssl_policy        = var.existing_domain_name != null ? local.ssl_policy : nullFV
   certificate_arn   = var.existing_domain_name != null ? aws_acm_certificate_validation.cert[0].certificate_arn : null
   default_action {
     type             = "forward"
@@ -112,7 +200,9 @@ resource "aws_lb_listener" "alb_listener_redirect" {
       status_code = "HTTP_301"
     }
   }
-}
+}*/
+
+#-----------------------------OLD VERSION REMOVE !!!-----------------------------#
 
 #-----------------------------Route 53-----------------------------#
 
