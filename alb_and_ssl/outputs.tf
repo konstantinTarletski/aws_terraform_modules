@@ -11,9 +11,11 @@ output "alb_arn" {
 }
 
 output "aws_lb_listener_id" {
-  value = aws_lb_listener.alb_listener.id
+  value = one(concat(
+    aws_lb_listener.alb_http_mode_listener[*].id,
+    aws_lb_listener.alb_https_mode_listener[*].id
+  ))
 }
-
 output "ports_with_target_groups" {
   value       = { for k, v in aws_lb_target_group.port_tg : k => v.arn }
   description = "{'port1' = 'tg_arn_2'},{'port1' = 'tg_arn_2'}"

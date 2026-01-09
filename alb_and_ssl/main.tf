@@ -156,7 +156,7 @@ resource "aws_lb_listener" "alb_https_mode_listener_redirect" {
   load_balancer_arn = aws_lb.alb.arn
   port              = var.existing_domain_name != null ? 443 : var.alb_http_port
   protocol          = var.existing_domain_name != null ? "HTTPS" : "HTTP"
-  ssl_policy        = var.existing_domain_name != null ? local.ssl_policy : nullFV
+  ssl_policy        = var.existing_domain_name != null ? local.ssl_policy : null
   certificate_arn   = var.existing_domain_name != null ? aws_acm_certificate_validation.cert[0].certificate_arn : null
   default_action {
     type             = "forward"
