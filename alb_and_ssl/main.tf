@@ -11,7 +11,6 @@ locals {
   workspace         = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
   long_project_name = "${var.project_name}-${var.environment}${local.workspace}"
   default_port      = one([for k, v in var.alb_port_mappings : k if v.is_default])
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   default_tags = merge(var.default_tags, {
     Workspace = terraform.workspace
   })
@@ -106,7 +105,7 @@ resource "aws_lb_listener" "alb_https_mode_listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy        = local.ssl_policy
+  ssl_policy        = var.ssl_policy
   certificate_arn = one(aws_acm_certificate_validation.cert[*].certificate_arn)
   default_action {
     type             = "forward"

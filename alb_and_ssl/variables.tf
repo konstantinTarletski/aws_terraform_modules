@@ -39,6 +39,12 @@ variable "existing_domain_name" {
   description = "Domain name you owned in amazon, hosted zones NS and SOA suppose to be present"
 }
 
+variable "ssl_policy" {
+  type        = string
+  default     = "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+  description = "SSL policy for aws_lb_listener"
+}
+
 variable "vpc_id" {
   type = string
 }
