@@ -25,7 +25,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 module "dev_ecs_service" {
-  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor"
+  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
   security_group_id      = aws_security_group.alb_sg.id
   ingress_ports_and_sg   = var.alb_sg_ingress_ports_and_sg
   ingress_ports_and_cidr = var.alb_sg_ingress_ports_and_cidr
