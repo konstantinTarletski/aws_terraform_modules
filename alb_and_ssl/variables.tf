@@ -27,12 +27,6 @@ variable "alb_port_mappings" {
   description = "{ '8080' = { host = 'www', priority = 10, health_check = '/'} }"
 }
 
-variable "alb_http_port" {
-  type        = number
-  default     = 80
-  description = "ALB HTTP port, HTTPS automatically will be at 443"
-}
-
 variable "existing_domain_name" {
   type        = string
   default     = null

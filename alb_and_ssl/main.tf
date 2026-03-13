@@ -68,7 +68,7 @@ resource "aws_lb_target_group" "port_tg" {
 resource "aws_lb_listener" "alb_http_listener" {
   for_each          = var.alb_port_mappings
   load_balancer_arn = aws_lb.alb.arn
-  port              = var.alb_http_port
+  port              = each.key
   protocol          = "HTTP"
 
   default_action {
@@ -99,10 +99,10 @@ resource "aws_lb_listener" "alb_https_listener" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = var.ssl_policy
-  certificate_arn = one(aws_acm_certificate_validation.cert[*].certificate_arn)
+  certificate_arn   = one(aws_acm_certificate_validation.cert[*].certificate_arn)
 
   default_action {
-    type =  "fixed-response"
+    type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
       message_body = "404: Service Not Found. Please use subdomains like www. или api."
@@ -116,7 +116,7 @@ resource "aws_lb_listener_rule" "host_based_routing" {
   for_each = var.existing_domain_name != null ? var.alb_port_mappings : {}
 
   listener_arn = one(aws_lb_listener.alb_https_listener[*].arn)
-  priority = each.value.priority
+  priority     = each.value.priority
 
   action {
     type = "forward"
@@ -137,155 +137,13 @@ resource "aws_lb_listener_rule" "host_based_routing" {
   }
 }
 
-
-/*#-----------------------------VERSION 2 END-----------------------------#
-
-/*#-----------------------------HTTP MODE-----------------------------#
-//Done with separate resource names to make possible to switch mode "on fly"
-
-resource "aws_lb_listener" "alb_http_mode_listener" {
-  count             = var.existing_domain_name == null ? 1 : 0
-  load_balancer_arn = aws_lb.alb.arn
-  port              = var.alb_http_port
-  protocol          = "HTTP"
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[local.default_port].arn
-  }
-}
-
-resource "aws_lb_listener_rule" "alb_http_mode_listener_rules" {
-  for_each = var.existing_domain_name == null ? {
-    for k, v in var.alb_port_mappings : k => v if !v.is_default
-  }: {}
-
-  listener_arn = one(aws_lb_listener.alb_http_mode_listener[*].arn)
-  priority     = each.value.priority
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[each.key].arn
-  }
-
-  condition {
-    host_header {
-      values = ["${each.value.host}.${aws_lb.alb.dns_name}"]
-    }
-  }
-}
-#-----------------------------HTTPS MODE-----------------------------#
-//Done with separate resource names to make possible to switch mode "on fly"
-
-resource "aws_lb_listener" "alb_https_mode_listener" {
-  count             = var.existing_domain_name == null ?  0 : 1
-  load_balancer_arn = aws_lb.alb.arn
-  port              = 443
-  protocol          = "HTTPS"
-  ssl_policy        = var.ssl_policy
-  certificate_arn = one(aws_acm_certificate_validation.cert[*].certificate_arn)
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[local.default_port].arn
-  }
-}
-
-resource "aws_lb_listener_rule" "alb_https_mode_listener_rules" {
-  for_each = var.existing_domain_name != null ? {
-    for k, v in var.alb_port_mappings : k => v if !v.is_default
-  }: {}
-
-  listener_arn = one(aws_lb_listener.alb_https_mode_listener[*].arn)
-  priority     = each.value.priority
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[each.key].arn
-  }
-
-  condition {
-    host_header {
-      values = [ "${each.value.host}.${var.existing_domain_name}" ]
-    }
-  }
-}
-
-resource "aws_lb_listener" "alb_https_mode_listener_redirect" {
-  count             = var.existing_domain_name != null ? 1 : 0
-  load_balancer_arn = aws_lb.alb.arn
-  port              = var.alb_http_port
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}*/
-
-#-----------------------------OLD VERSION REMOVE !!!-----------------------------#
-/*resource "aws_lb_listener" "alb_http_listener" {
-  load_balancer_arn = aws_lb.alb.arn
-  port              = var.existing_domain_name != null ? 443 : var.alb_http_port
-  protocol          = var.existing_domain_name != null ? "HTTPS" : "HTTP"
-  ssl_policy        = var.existing_domain_name != null ? local.ssl_policy : null
-  certificate_arn   = var.existing_domain_name != null ? aws_acm_certificate_validation.cert[0].certificate_arn : null
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[local.default_port].arn
-  }
-}
-
-resource "aws_lb_listener_rule" "rules" {
-  for_each     = { for k, v in var.alb_port_mappings : k => v if !v.is_default }
-  listener_arn = aws_lb_listener.alb_listener.arn
-  priority     = each.value.priority
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.port_tg[each.key].arn
-  }
-
-  condition {
-    host_header {
-      //compact - removes "null" values
-      values = compact([
-        var.existing_domain_name != null ? "${each.value.host}.${var.existing_domain_name}" : null,
-        "${each.value.host}.${aws_lb.alb.dns_name}"
-      ])
-    }
-  }
-}
-
-resource "aws_lb_listener" "alb_listener_redirect" {
-  count             = var.existing_domain_name != null ? 1 : 0
-  load_balancer_arn = aws_lb.alb.arn
-  port              = var.alb_http_port
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}*/
-
-#-----------------------------OLD VERSION REMOVE !!!-----------------------------#
-
 #-----------------------------Route 53-----------------------------#
 
 resource "aws_acm_certificate" "cert" {
-  count             = var.existing_domain_name != null ? 1 : 0
-  domain_name       = var.existing_domain_name
+  count                     = var.existing_domain_name != null ? 1 : 0
+  domain_name               = var.existing_domain_name
   subject_alternative_names = ["*.${var.existing_domain_name}"]
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -300,7 +158,7 @@ data "aws_route53_zone" "domain_hosted_zone" {
 
 resource "aws_route53_record" "cert_validation" {
   for_each = var.existing_domain_name != null ? {
-    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => {
+    for dvo in flatten(aws_acm_certificate.cert[*].domain_validation_options) : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -317,13 +175,13 @@ resource "aws_route53_record" "cert_validation" {
 
 resource "aws_acm_certificate_validation" "cert" {
   count                   = var.existing_domain_name != null ? 1 : 0
-  certificate_arn         = aws_acm_certificate.cert[0].arn
+  certificate_arn         = one(aws_acm_certificate.cert[*].arn)
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 resource "aws_route53_record" "hosted_zone_record_a_wildcard" {
   count   = var.existing_domain_name != null ? 1 : 0
-  zone_id = data.aws_route53_zone.domain_hosted_zone[0].zone_id
+  zone_id = one(data.aws_route53_zone.domain_hosted_zone[*].zone_id)
   name    = "*.${var.existing_domain_name}"
   type    = "A"
 
@@ -334,15 +192,15 @@ resource "aws_route53_record" "hosted_zone_record_a_wildcard" {
   }
 }
 
-  resource "aws_route53_record" "hosted_zone_record_a_domain" {
-    count   = var.existing_domain_name != null ? 1 : 0
-    zone_id = data.aws_route53_zone.domain_hosted_zone[0].zone_id
-    name    = var.existing_domain_name
-    type    = "A"
+resource "aws_route53_record" "hosted_zone_record_a_domain" {
+  count   = var.existing_domain_name != null ? 1 : 0
+  zone_id = data.aws_route53_zone.domain_hosted_zone[0].zone_id
+  name    = var.existing_domain_name
+  type    = "A"
 
-    alias {
-      name                   = aws_lb.alb.dns_name
-      zone_id                = aws_lb.alb.zone_id
-      evaluate_target_health = true
-    }
+  alias {
+    name                   = aws_lb.alb.dns_name
+    zone_id                = aws_lb.alb.zone_id
+    evaluate_target_health = true
+  }
 }
