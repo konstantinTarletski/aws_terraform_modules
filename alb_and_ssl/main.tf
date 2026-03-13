@@ -10,7 +10,6 @@ terraform {
 locals {
   workspace         = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
   long_project_name = "${var.project_name}-${var.environment}${local.workspace}"
-  default_port      = one([for k, v in var.alb_port_mappings : k if v.is_default])
   default_tags = merge(var.default_tags, {
     Workspace = terraform.workspace
   })
@@ -63,7 +62,85 @@ resource "aws_lb_target_group" "port_tg" {
   }
 }
 
-#-----------------------------HTTP MODE-----------------------------#
+#-----------------------------VERSION 2-----------------------------#
+
+#----HTTP MODE (splitting by PORT)----#
+resource "aws_lb_listener" "alb_http_listener" {
+  for_each          = var.alb_port_mappings
+  load_balancer_arn = aws_lb.alb.arn
+  port              = var.alb_http_port
+  protocol          = "HTTP"
+
+  default_action {
+    type = var.existing_domain_name == null ? "forward" : "redirect"
+
+    dynamic "forward" {
+      for_each = var.existing_domain_name == null ? [1] : []
+      content {
+        target_group_arn = aws_lb_target_group.port_tg[each.key].arn
+      }
+    }
+
+    dynamic "redirect" {
+      for_each = var.existing_domain_name != null ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+  }
+}
+
+#----HTTPS MODE ----#
+resource "aws_lb_listener" "alb_https_listener" {
+  count             = var.existing_domain_name != null ? 1 : 0
+  load_balancer_arn = aws_lb.alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_policy
+  certificate_arn = one(aws_acm_certificate_validation.cert[*].certificate_arn)
+
+  default_action {
+    type =  "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: Service Not Found. Please use subdomains like www. или api."
+      status_code  = "404"
+    }
+  }
+}
+
+#----HTTPS ROUTING RULES----#
+resource "aws_lb_listener_rule" "host_based_routing" {
+  for_each = var.existing_domain_name != null ? var.alb_port_mappings : {}
+
+  listener_arn = one(aws_lb_listener.alb_https_listener[*].arn)
+  priority = each.value.priority
+
+  action {
+    type = "forward"
+    forward {
+      target_group {
+        arn = aws_lb_target_group.port_tg[each.key].arn
+      }
+    }
+  }
+
+  condition {
+    dynamic "host_header" {
+      for_each = var.existing_domain_name != null ? [1] : []
+      content {
+        values = ["${each.value.host}.${var.existing_domain_name}"]
+      }
+    }
+  }
+}
+
+
+/*#-----------------------------VERSION 2 END-----------------------------#
+
+/*#-----------------------------HTTP MODE-----------------------------#
 //Done with separate resource names to make possible to switch mode "on fly"
 
 resource "aws_lb_listener" "alb_http_mode_listener" {
@@ -96,7 +173,6 @@ resource "aws_lb_listener_rule" "alb_http_mode_listener_rules" {
     }
   }
 }
-
 #-----------------------------HTTPS MODE-----------------------------#
 //Done with separate resource names to make possible to switch mode "on fly"
 
@@ -148,7 +224,7 @@ resource "aws_lb_listener" "alb_https_mode_listener_redirect" {
       status_code = "HTTP_301"
     }
   }
-}
+}*/
 
 #-----------------------------OLD VERSION REMOVE !!!-----------------------------#
 /*resource "aws_lb_listener" "alb_http_listener" {

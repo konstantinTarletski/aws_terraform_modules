@@ -22,9 +22,9 @@ variable "alb_port_mappings" {
     host         = string
     priority     = number
     health_check = string
-    is_default   = bool
   }))
-  default = { "8080" = { host = "www", priority = 10, health_check = "/", is_default = true } }
+  default = { "8080" = { host = "www", priority = 10, health_check = "/"} }
+  description = "{ '8080' = { host = 'www', priority = 10, health_check = '/'} }"
 }
 
 variable "alb_http_port" {

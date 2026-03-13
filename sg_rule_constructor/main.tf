@@ -75,7 +75,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_sg" {
 
 #-----------------------------NAMED RULE "KEY"-----------------------------#
 
-resource "aws_vpc_security_group_ingress_rule" "egress_sg_named" {
+resource "aws_vpc_security_group_ingress_rule" "ingress_sg_named" {
   for_each = var.ingress_ports_and_sg_named
 
   security_group_id            = var.security_group_id
