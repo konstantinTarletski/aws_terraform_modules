@@ -23,16 +23,6 @@ resource "aws_security_group" "alb_sg" {
   })
 }
 
-module "dev_ecs_service" {
-  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
-  security_group_id      = aws_security_group.alb_sg.id
-  ingress_ports_and_sg   = var.alb_sg_ingress_ports_and_sg
-  ingress_ports_and_cidr = var.alb_sg_ingress_ports_and_cidr
-  egress_ports_and_sg    = var.alb_sg_egress_ports_and_sg
-  egress_ports_and_cidr  = var.alb_sg_egress_ports_and_cidr
-  depends_on             = [aws_security_group.alb_sg]
-}
-
 resource "aws_lb" "alb" {
   name               = "ALB-${local.long_project_name}"
   internal           = false
@@ -62,9 +52,7 @@ resource "aws_lb_target_group" "port_tg" {
   }
 }
 
-#-----------------------------VERSION 2-----------------------------#
-
-#----HTTP MODE (splitting by PORT)----#
+#-----------------------------HTTP -----------------------------#
 resource "aws_lb_listener" "alb_http_listener" {
   for_each          = var.alb_port_mappings
   load_balancer_arn = aws_lb.alb.arn
@@ -97,7 +85,18 @@ resource "aws_lb_listener" "alb_http_listener" {
   }
 }
 
-#----HTTPS MODE ----#
+module "alb_http_sg_rules" {
+  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
+  security_group_id = aws_security_group.alb_sg.id
+
+  ingress_ports_and_cidr = var.existing_domain_name == null ? {
+    for port, target in var.alb_port_mappings : port => var.alb_sg_cidr
+  } : {}
+
+  depends_on = [aws_security_group.alb_sg]
+}
+
+#-----------------------------HTTPS -----------------------------#
 resource "aws_lb_listener" "alb_https_listener" {
   count             = var.existing_domain_name != null ? 1 : 0
   load_balancer_arn = aws_lb.alb.arn
@@ -117,6 +116,18 @@ resource "aws_lb_listener" "alb_https_listener" {
   lifecycle {
     create_before_destroy = false
   }
+}
+
+module "alb_https_sg_rules" {
+  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
+  security_group_id = aws_security_group.alb_sg.id
+
+  ingress_ports_and_cidr = var.existing_domain_name != null ? {
+    "80"  = var.alb_sg_cidr,
+    "443" = var.alb_sg_cidr
+  } : {}
+
+  depends_on = [aws_security_group.alb_sg]
 }
 
 #----HTTPS ROUTING RULES----#

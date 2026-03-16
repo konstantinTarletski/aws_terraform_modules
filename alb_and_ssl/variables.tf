@@ -41,32 +41,16 @@ variable "ssl_policy" {
 
 variable "vpc_id" {
   type = string
+  description = "Virtual private cloud ID"
 }
 
 variable "subnets_ids" {
   type = list(string)
+  description = "Virtual private cloud subnets"
 }
 
-variable "alb_sg_ingress_ports_and_sg" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '8080' = ['sg-123', 'sg-456'] }"
-}
-
-variable "alb_sg_ingress_ports_and_cidr" {
-  type        = map(list(string))
-  default     = { "80" = ["0.0.0.0/0"], "443" = ["0.0.0.0/0"] }
-  description = "Default is: { '80' = ['0.0.0.0/0'] , '443' = ['0.0.0.0/0']}, Disable 443 if no domain !!!"
-}
-
-variable "alb_sg_egress_ports_and_sg" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '443' = ['sg-123', 'sg-456'] }"
-}
-
-variable "alb_sg_egress_ports_and_cidr" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '443' = ['0.0.0.0/0'] }"
+variable "alb_sg_cidr" {
+  type = list(string)
+  description = "Opened CIDR blocs for ALB"
+  default = ["0.0.0.0/0"]
 }

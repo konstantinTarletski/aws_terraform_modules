@@ -69,7 +69,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_sg" {
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)
   to_port                      = tonumber(each.value.port)
-  ip_protocol                  = "tcp"
+  ip_protocol                  = var.ip_protocol
   referenced_security_group_id = each.value.sg_id
 }
 
