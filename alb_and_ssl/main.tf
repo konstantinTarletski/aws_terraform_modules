@@ -90,6 +90,9 @@ resource "aws_lb_listener" "alb_http_listener" {
       }
     }
   }
+  lifecycle {
+    create_before_destroy = false
+  }
 }
 
 #----HTTPS MODE ----#
@@ -108,6 +111,9 @@ resource "aws_lb_listener" "alb_https_listener" {
       message_body = "404: Service Not Found. Please use subdomains like www. или api."
       status_code  = "404"
     }
+  }
+  lifecycle {
+    create_before_destroy = false
   }
 }
 
