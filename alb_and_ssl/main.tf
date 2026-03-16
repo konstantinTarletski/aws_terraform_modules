@@ -77,7 +77,9 @@ resource "aws_lb_listener" "alb_http_listener" {
     dynamic "forward" {
       for_each = var.existing_domain_name == null ? [1] : []
       content {
-        target_group_arn = aws_lb_target_group.port_tg[each.key].arn
+        target_group {
+          arn = aws_lb_target_group.port_tg[each.key].arn
+        }
       }
     }
 
