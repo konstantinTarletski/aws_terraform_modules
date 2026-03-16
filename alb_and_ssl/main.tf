@@ -166,7 +166,7 @@ data "aws_route53_zone" "domain_hosted_zone" {
 
 resource "aws_route53_record" "cert_validation" {
   for_each = var.existing_domain_name != null ? {
-    for dvo in flatten(aws_acm_certificate.cert[*].domain_validation_options) : dvo.domain_name => {
+    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
