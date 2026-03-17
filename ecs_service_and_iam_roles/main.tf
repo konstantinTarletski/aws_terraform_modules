@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.27.0"
+      version = "~> 6.30"
     }
   }
 }
@@ -43,7 +43,7 @@ resource "aws_security_group" "ecs_sg" {
 }
 
 module "dev_ecs_service" {
-  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor"
+  source                 = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
   security_group_id      = aws_security_group.ecs_sg.id
   ingress_ports_and_sg   = var.ecs_sg_ingress_ports_and_sg
   ingress_ports_and_cidr = var.ecs_sg_ingress_ports_and_cidr

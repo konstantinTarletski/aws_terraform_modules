@@ -22,15 +22,9 @@ variable "alb_port_mappings" {
     host         = string
     priority     = number
     health_check = string
-    is_default   = bool
   }))
-  default = { "8080" = { host = "www", priority = 10, health_check = "/", is_default = true } }
-}
-
-variable "alb_http_port" {
-  type        = number
-  default     = 80
-  description = "ALB HTTP port, HTTPS automatically will be at 443"
+  default = { "8080" = { host = "www", priority = 10, health_check = "/"} }
+  description = "{ '8080' = { host = 'www', priority = 10, health_check = '/'} }"
 }
 
 variable "existing_domain_name" {
@@ -39,34 +33,24 @@ variable "existing_domain_name" {
   description = "Domain name you owned in amazon, hosted zones NS and SOA suppose to be present"
 }
 
+variable "ssl_policy" {
+  type        = string
+  default     = "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+  description = "SSL policy for aws_lb_listener"
+}
+
 variable "vpc_id" {
   type = string
+  description = "Virtual private cloud ID"
 }
 
 variable "subnets_ids" {
   type = list(string)
+  description = "Virtual private cloud subnets"
 }
 
-variable "alb_sg_ingress_ports_and_sg" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '8080' = ['sg-123', 'sg-456'] }"
-}
-
-variable "alb_sg_ingress_ports_and_cidr" {
-  type        = map(list(string))
-  default     = { "80" = ["0.0.0.0/0"], "443" = ["0.0.0.0/0"] }
-  description = "Default is: { '80' = ['0.0.0.0/0'] , '443' = ['0.0.0.0/0']}, Disable 443 if no domain !!!"
-}
-
-variable "alb_sg_egress_ports_and_sg" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '443' = ['sg-123', 'sg-456'] }"
-}
-
-variable "alb_sg_egress_ports_and_cidr" {
-  type        = map(list(string))
-  default     = {}
-  description = "Example: { '443' = ['0.0.0.0/0'] }"
+variable "alb_sg_cidr" {
+  type = list(string)
+  description = "Opened CIDR blocs for ALB"
+  default = ["0.0.0.0/0"]
 }

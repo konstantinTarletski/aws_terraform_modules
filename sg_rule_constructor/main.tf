@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.27.0"
+      version = "~> 6.30"
     }
   }
 }
@@ -69,13 +69,13 @@ resource "aws_vpc_security_group_egress_rule" "egress_sg" {
   security_group_id            = var.security_group_id
   from_port                    = tonumber(each.value.port)
   to_port                      = tonumber(each.value.port)
-  ip_protocol                  = "tcp"
+  ip_protocol                  = var.ip_protocol
   referenced_security_group_id = each.value.sg_id
 }
 
 #-----------------------------NAMED RULE "KEY"-----------------------------#
 
-resource "aws_vpc_security_group_ingress_rule" "egress_sg_named" {
+resource "aws_vpc_security_group_ingress_rule" "ingress_sg_named" {
   for_each = var.ingress_ports_and_sg_named
 
   security_group_id            = var.security_group_id
