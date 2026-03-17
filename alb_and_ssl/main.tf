@@ -53,38 +53,6 @@ resource "aws_lb_target_group" "port_tg" {
 }
 
 #-----------------------------HTTP -----------------------------#
-resource "aws_lb_listener" "alb_http_listener" {
-  for_each          = var.alb_port_mappings
-  load_balancer_arn = aws_lb.alb.arn
-  port              = each.key
-  protocol          = "HTTP"
-
-  default_action {
-    type = var.existing_domain_name == null ? "forward" : "redirect"
-
-    dynamic "forward" {
-      for_each = var.existing_domain_name == null ? [1] : []
-      content {
-        target_group {
-          arn = aws_lb_target_group.port_tg[each.key].arn
-        }
-      }
-    }
-
-    dynamic "redirect" {
-      for_each = var.existing_domain_name != null ? [1] : []
-      content {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
-    }
-  }
-  lifecycle {
-    create_before_destroy = false
-  }
-}
-
 module "alb_http_sg_rules" {
   source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
   security_group_id = aws_security_group.alb_sg.id
@@ -96,8 +64,39 @@ module "alb_http_sg_rules" {
   depends_on = [aws_security_group.alb_sg]
 }
 
+resource "aws_lb_listener" "alb_http_listener" {
+  for_each = var.existing_domain_name == null ? var.alb_port_mappings : {}
+  load_balancer_arn = aws_lb.alb.arn
+  port              = each.key
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    forward {
+      target_group {
+        arn = aws_lb_target_group.port_tg[each.key].arn
+      }
+    }
+  }
+  lifecycle {
+    create_before_destroy = false
+  }
+}
+
 #-----------------------------HTTPS -----------------------------#
-resource "aws_lb_listener" "alb_https_listener" {
+module "alb_https_sg_rules" {
+  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
+  security_group_id = aws_security_group.alb_sg.id
+
+  ingress_ports_and_cidr = var.existing_domain_name != null ? {
+    "80"  = var.alb_sg_cidr,
+    "443" = var.alb_sg_cidr
+  } : {}
+
+  depends_on = [aws_security_group.alb_sg]
+}
+
+resource "aws_lb_listener" "alb_https_443_listener" {
   count             = var.existing_domain_name != null ? 1 : 0
   load_balancer_arn = aws_lb.alb.arn
   port              = "443"
@@ -118,23 +117,30 @@ resource "aws_lb_listener" "alb_https_listener" {
   }
 }
 
-module "alb_https_sg_rules" {
-  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
-  security_group_id = aws_security_group.alb_sg.id
+resource "aws_lb_listener" "alb_https_80_listener" {
+  count             = var.existing_domain_name != null ? 1 : 0
+  load_balancer_arn = aws_lb.alb.arn
+  port              = "80"
+  protocol          = "HTTP"
 
-  ingress_ports_and_cidr = var.existing_domain_name != null ? {
-    "80"  = var.alb_sg_cidr,
-    "443" = var.alb_sg_cidr
-  } : {}
-
-  depends_on = [aws_security_group.alb_sg]
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+  lifecycle {
+    create_before_destroy = false
+  }
 }
 
 #----HTTPS ROUTING RULES----#
 resource "aws_lb_listener_rule" "host_based_routing" {
   for_each = var.existing_domain_name != null ? var.alb_port_mappings : {}
 
-  listener_arn = one(aws_lb_listener.alb_https_listener[*].arn)
+  listener_arn = one(aws_lb_listener.alb_https_443_listener[*].arn)
   priority     = each.value.priority
 
   action {
