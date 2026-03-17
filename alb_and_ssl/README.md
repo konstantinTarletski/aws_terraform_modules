@@ -25,11 +25,6 @@ Activated by providing an `existing_domain_name`.
 *   **Traffic Enforcement:** Automatically configures **301 Redirects** for all incoming HTTP ports to a secured **443 (HTTPS)** listener.
 *   **Service Discovery:** Traffic is distributed via subdomains (e.g., `api.domain.com`) while preserving the original path structure.
 
-## 💎 Engineering Excellence
-
-*   **Dynamic Listener Constructor:** Utilizing `for_each` allows for horizontal scaling of ingress points. The module is architected so that adding a new service or an additional port requires zero changes to the underlying module code.
-*   **Zero-Downtime Switching:** Transitions between HTTP and HTTPS modes are performed via **In-place Updates**. Listener logic is updated on-the-fly, eliminating `DuplicateListener` conflicts and ensuring service availability during migration.
-*   **Production-Ready Implementation:** Leverages Terraform functions like `one()`, `flatten()`, and **Splat operators (`[*]`)**. This makes the code resilient when dealing with conditional resources, ensuring stable `terraform plan/apply` cycles regardless of the state.
 
 ## 📦 Integration Example
 
