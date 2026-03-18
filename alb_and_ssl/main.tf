@@ -54,7 +54,7 @@ resource "aws_lb_target_group" "port_tg" {
 
 #-----------------------------HTTP -----------------------------#
 module "alb_http_sg_rules" {
-  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
+  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=v1.1.0"
   security_group_id = aws_security_group.alb_sg.id
 
   ingress_ports_and_cidr = var.existing_domain_name == null ? {
@@ -65,7 +65,7 @@ module "alb_http_sg_rules" {
 }
 
 resource "aws_lb_listener" "alb_http_listener" {
-  for_each = var.existing_domain_name == null ? var.alb_port_mappings : {}
+  for_each          = var.existing_domain_name == null ? var.alb_port_mappings : {}
   load_balancer_arn = aws_lb.alb.arn
   port              = each.key
   protocol          = "HTTP"
@@ -85,7 +85,7 @@ resource "aws_lb_listener" "alb_http_listener" {
 
 #-----------------------------HTTPS -----------------------------#
 module "alb_https_sg_rules" {
-  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=feature/alb-refactoring-improved"
+  source            = "git@github.com:konstantinTarletski/aws_terraform_modules.git//sg_rule_constructor?ref=v1.1.0"
   security_group_id = aws_security_group.alb_sg.id
 
   ingress_ports_and_cidr = var.existing_domain_name != null ? {
